@@ -35,7 +35,17 @@
   (make-array 3 :element-type 'single-float :initial-element 1.0)
   "Size of cuboid in set")
 
-(defstruct node
+(declaim (inline leafp))
+(defun leafp (node)
+  "Is node a leaf?"
+  (null (node-children node)))
+
+(defstruct (node (:print-function (lambda (struct stream depth)
+                                    (declare (ignore depth))
+                                    (print-unreadable-object (struct stream
+                                                              :type t
+                                                              :identity t)
+                                      (format stream "LEAFP:~A" (leafp struct))))))
   children
   bounding-box
   dots)
@@ -129,8 +139,3 @@
                               (= i (get-subspace-idx avg dot))))
                        (make-tree (remove-if-not #'current-subspace dots)))))))
     node))
-
-(declaim (inline leafp))
-(defun leafp (node)
-  "Is node a leaf?"
-  (null (node-children node)))
