@@ -107,10 +107,15 @@
    calculates which possibility is the case."
   (declare (type dot dot1 dot2)
            (optimize (speed 3)))
-  (loop for x float across dot1
-     for y float across dot2
-     for i from 0 by 1 sum
-       (ash (if (> x y) 1 0) i)))
+  
+  (do ((res 0)
+       (i 0 (1+ i)))
+      ((= i 3) res)
+    
+    (declare (type fixnum i res))
+    (setq res (logior res (sb-ext:truly-the fixnum
+                                            (ash (if (> (aref dot1 i)
+                                                        (aref dot2 i)) 1 0) i))))))
 
 (defun align-on-voxel (dot)
   "Destructevily aligns on voxel"
