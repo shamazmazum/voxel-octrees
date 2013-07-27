@@ -70,7 +70,7 @@
                         (if (< (calc-abs-metric dot1 origin)
                                (calc-abs-metric dot2 origin))
                             dot1 dot2)))
-                 (list
+                 (values
                   (reduce #'get-closest leaf-intersections)
                   history)))))
         
@@ -91,12 +91,13 @@
                                               (sort plane-intersections #'get-closest-tagged)))))
 
            (dolist (subspace plane-intersections)
-             (let ((inter (ray-tree-intersection (nth (car subspace)
-                                                      (node-children tree))
-                                                 (cdr subspace) dir
-                                                 :save-history save-history
-                                                 :history history)))
-               (if inter (return inter))))))))))
+             (multiple-value-bind (inter history)
+                 (ray-tree-intersection (nth (car subspace)
+                                             (node-children tree))
+                                        (cdr subspace) dir
+                                        :save-history save-history
+                                        :history history)
+               (if inter (return (values inter history)))))))))))
 
 ;; More precise but slower
 ;; ?????
