@@ -148,7 +148,15 @@
 ;; different directions and the same origin.
 ;; To do this call RAY-TREE-INTERSECTION with the first ray and true :SAVE-HISTORY
 ;; With next rays call LOCAL-RAY-TREE-INTERSECTION with HISTORY obtained from the call
-;; of RAY-TREE-INTERSECTION
+;; (or just (list TREE)) of RAY-TREE-INTERSECTION
+
+;; Example:
+;; (let ((history (list tree)))
+;;     (dolist (dir directions)
+;;         (multiple-value-bind (intersection new-history)
+;;                   (local-ray-tree-intersection history origin dir)
+;;               (setq history new-history)
+;;               ... Do anything you want... )))
 
 ;; NB: There is a penalty in speed (with comparsion with RAY-TREE-INTERSECTION),
 ;; if rays are not local or do not hit the same continuous object
@@ -160,8 +168,8 @@
    is a child of the third and so on. ORIGIN and DIR are
    arrays of type DOT
 
-   Returns intersection and (updated history or NIL if history
-   was not updated)"
+   Returns intersection and newly calculated history, which is
+   most suited for next calls"
   (declare (optimize (speed 3))
            (type list history)
            (type (integer 0 #.most-positive-fixnum) depth))
@@ -170,7 +178,7 @@
       (ray-tree-intersection (car (last history)) origin dir
                              :save-history t)
       (let ((intersection (ray-tree-intersection (car history) origin dir)))
-        (if intersection intersection
+        (if intersection (values intersection history)
             (local-ray-tree-intersection (cdr history) origin dir (sb-ext:truly-the
                                                                    (integer 0 #.most-positive-fixnum)
                                                                    (1- depth)))))))
