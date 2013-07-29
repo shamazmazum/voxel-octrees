@@ -27,7 +27,10 @@
   (:export #:verify-ray-tree1
            #:verify-ray-tree2
 
-           #:check-tree))
+           #:check-tree
+
+           #:check-local-properties
+           #:compare-local-no-local))
 
 (in-package :voxel-octrees-test)
 
@@ -195,3 +198,146 @@
 
                         ;; Recursively check children
                         (check-tree child))))))))))
+
+;; Check local properties of 3D -> 2D map
+
+;; Warning: This requires a lot of memory. 2.5GB will do.
+(defun make-working-set ()
+  "Make a working set which contains 200x200x200 cube.
+   That will be 8000000 dots"
+  (make-tree
+   (let ((idx 0)
+         (array (make-array 8000000)))
+
+     (loop for i below 200 do
+          (loop for j below 200 do
+               (loop for k below 200 do
+                    (let ((dot (make-array 3 :element-type 'single-float
+                                           :initial-contents (list (- (* 1.0 i) 100)
+                                                                   (+ 100.0 (* 1.0 j))
+                                                                   (- (* 1.0 k) 100)))))
+                      (setf (aref array idx) dot
+                            idx (1+ idx))))))
+     array)))
+
+(defun check-local-properties (&optional (tree (make-working-set)))
+  "Collect statistics on LOCAL-RAY-TREE-INTERSECTION by
+   hitting working set with 798x600 `matrix' of rays with
+   the same origin and gradually changing direction.
+
+   Returns passed argument or created working tree if TREE was not
+   supplied."
+  (let ((origin (make-array 3
+                            :element-type 'single-float
+                            :initial-element 0.0))
+        (dir (make-array 3
+                            :element-type 'single-float
+                            :initial-element 400.0))
+        (dx #.(/ (* 2 400.0) 798))
+        (dy #.(/ (* 2 400.0) 600))
+        voxel-octrees:*ray-test-search-stats*
+        (hits 0))
+
+    (format t "Bound?: ~A~%" (boundp 'voxel-octrees:*ray-test-search-stats*))
+
+    (loop for i below #.(/ 798 3)
+          for x from (- dx 400.0) by (* 3 dx) do
+         
+         (loop for j below #.(/ 600 3)
+            for y from (- dy 400.0) by (* 3 dy) do
+              
+              (let ((history (list tree)))
+                (loop for k below 3
+                     for x-offset from (- dx) by dx do
+
+                     (loop for l below 3
+                        for y-offset from (- dy) by dy do
+
+                          (setf (aref dir 0)
+                                (+ x x-offset)
+                                (aref dir 2)
+                                (+ y y-offset))
+                          
+                          (multiple-value-bind (inter new-history)
+                              (local-ray-tree-intersection history origin dir)
+                            (if new-history (setq history new-history))
+                            (if inter (incf hits))))))))
+
+    (format t "~D hits total~%" hits)
+    (format t "~D hits was found from tree leafs using local properties~%"
+            (count *max-depth* voxel-octrees:*ray-test-search-stats*))
+    (format t "~D times LOCAL-RAY-TEST-INTERSECTION had failed, starting from tree root~%"
+            (count 0 voxel-octrees:*ray-test-search-stats*))
+
+    (format t "~A~%" (loop for i from 0 to *max-depth* collect (count i voxel-octrees:*ray-test-search-stats*))))
+  tree)
+
+(defun time-hits-local (tree)
+  "Print (time ...) of hitting tree with 798x600 matrix of rays
+   using local properties"
+  (let ((origin (make-array 3
+                            :element-type 'single-float
+                            :initial-element 0.0))
+        (dir (make-array 3
+                         :element-type 'single-float
+                         :initial-element 400.0))
+        (dx #.(/ (* 2 400.0) 798))
+        (dy #.(/ (* 2 400.0) 600))
+        (hits 0))
+    (time
+    (loop for i below #.(/ 798 3)
+       for x from (- dx 400.0) by (* 3 dx) do
+         
+         (loop for j below #.(/ 600 3)
+            for y from (- dy 400.0) by (* 3 dy) do
+              
+              (let ((history (list tree)))
+                (loop for k below 3
+                   for x-offset from (- dx) by dx do
+                     
+                     (loop for l below 3
+                        for y-offset from (- dy) by dy do
+                          
+                          (setf (aref dir 0)
+                                (+ x x-offset)
+                                (aref dir 2)
+                                (+ y y-offset))
+                          
+                          (multiple-value-bind (inter new-history)
+                              (local-ray-tree-intersection history origin dir)
+                            (if new-history (setq history new-history))
+                            (if inter (incf hits)))))))))
+    hits))
+
+(defun time-hits-no-local (tree)
+  "Print (time ...) of hitting tree with 798x600 matrix of rays
+   without using local properties"
+  (let ((origin (make-array 3
+                            :element-type 'single-float
+                            :initial-element 0.0))
+        (dir (make-array 3
+                         :element-type 'single-float
+                         :initial-element 400.0))
+        (dx #.(/ (* 2 400.0) 798))
+        (dy #.(/ (* 2 400.0) 600))
+        ;voxel-octrees:*ray-test-search-stats*
+        (hits 0))
+    (time
+    (loop for i below 798
+       for x from (- 400.0) by dx do
+         
+         (loop for j below 600
+            for y from (- 400.0) by dy do
+              
+              (setf (aref dir 0) x
+                    (aref dir 2) y)
+                          
+              (let ((inter (ray-tree-intersection tree origin dir)))
+                (if inter (incf hits))))))
+    hits))
+
+(defun compare-local-no-local (&optional (tree (make-working-set)))
+  "Compare time of execution of TIME-HITS-LOCAL and TIME-HITS-NO-LOCAL"
+  (if (/= (progn (format t "Using local properties:~%") (time-hits-local tree))
+          (progn (format t "Without local properties:~%") (time-hits-no-local tree)))
+      (format t "Error: Numbers of hits do not match~%")))

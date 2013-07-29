@@ -22,6 +22,10 @@
 ;;(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;;SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+;; Next form enables additional tests. It may reduce performance a bit
+(eval-when (:load-toplevel :compile-toplevel :execute)
+  (pushnew :voxel-octrees-test *features*))
+
 (defsystem :voxel-octrees
   :description "Building and manipulating with octrees in CL"
   :maintainer "Vasily Postnicov"
@@ -31,4 +35,5 @@
    (:file "tree" :depends-on ("package"))
    (:file "geometry" :depends-on ("package"))
    (:file "search" :depends-on ("package"))
+   #+voxel-octrees-test
    (:file "test" :depends-on ("package"))))

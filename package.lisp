@@ -42,4 +42,8 @@
 
            #:*max-dots* ; Parameters
            #:*voxel*
-           #:*max-depth*))
+           #:*max-depth*
+
+           ;; Test values
+           #+voxel-octrees-test
+           #:*ray-test-search-stats*))

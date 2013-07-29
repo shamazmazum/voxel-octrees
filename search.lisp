@@ -30,6 +30,9 @@
    The less this parameter is, the less is a penalty
    in the worst case")
 
+#+voxel-octrees-test
+(defvar *ray-test-search-stats*)
+
 ;; (Maybe) faster version
 
 (defun construct-subspace-indices (intersects)
@@ -173,12 +176,21 @@
   (declare (optimize (speed 3))
            (type list history)
            (type (integer 0 #.most-positive-fixnum) depth))
+  #+voxel-octrees-test
+  (if (and (= depth 0) (boundp '*ray-test-search-stats*))
+      (push 0 *ray-test-search-stats*))
   (if (or (= depth 0)
           (null (cdr history)))
       (ray-tree-intersection (car (last history)) origin dir
                              :save-history t)
       (let ((intersection (ray-tree-intersection (car history) origin dir)))
-        (if intersection (values intersection history)
+        (if intersection
+            #+voxel-octrees-test
+            (progn
+              (if (boundp '*ray-test-search-stats*) (push depth *ray-test-search-stats*))
+              (values intersection history))
+            #-voxel-octrees-test
+            (values intersection history)
             (local-ray-tree-intersection (cdr history) origin dir (sb-ext:truly-the
                                                                    (integer 0 #.most-positive-fixnum)
                                                                    (1- depth)))))))
