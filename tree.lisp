@@ -134,3 +134,19 @@
                               (= i (get-subspace-idx avg dot))))
                        (make-tree (remove-if-not #'current-subspace dots)))))))
     node))
+
+(defun inaccurate-tree-depth (tree &optional (depth 0))
+  "Returns inaccurate depth of tree. Leaf node has zero
+   depth."
+  (declare (optimize (speed 3))
+           (type (integer 0 #.most-positive-fixnum) depth))
+  (if (leafp tree) depth
+      (inaccurate-tree-depth (nth
+                              (logand #x07 depth)
+                              (node-children tree))
+                             (1+ depth))))
+
+(defun voxels-in-tree (tree)
+  "Returns number of voxels in tree"
+  (if (leafp tree) (length (node-dots tree))
+      (reduce #'+ (mapcar #'voxels-in-tree (node-children tree)))))

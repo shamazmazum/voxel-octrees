@@ -27,7 +27,8 @@
   (:export #:verify-ray-tree1
            #:verify-ray-tree2
 
-           #:check-tree))
+           #:check-tree
+           #:inaccurate-balanceness))
 
 (in-package :voxel-octrees-test)
 
@@ -195,3 +196,38 @@
 
                         ;; Recursively check children
                         (check-tree child))))))))))
+
+;; FIXME: Logical derivations are so:
+;;  1) We presume that each leaf in the tree contains
+;;     the same number of elements (more precise:
+;;     (1 + *max-dots*) / 2.
+;;  2) We also think that number of nodes between the root
+;;     and any leaf of tree (no matter the path we follow)
+;;     is the same too.
+;;
+;;  1) and 2) are true for "idealy" balanced trees.
+;;  The INACCURATE-BALANCENESS exploits these two assumptions
+;;  and takes ratio of tree depth calculated both by using
+;;  known number of voxels in the tree and by traversing
+;;  the tree from root to leaf incrementing the depth by 1.
+;;
+;;  It is designed to return 1 if TREE conformes both
+;;  1) and 2) statements.
+;;
+;;  So if the TREE is balanced the function returns 1.
+;;  In other words, if INACCURATE-BALANCENESS does not
+;;  return 1 if the tree is unbalanced.
+
+;; The following function called "inaccurate" because
+;; it uses two assumptions listed above and does not
+;; establish (two-way) equality between the fact that
+;; tree is balanced and equality of its result to 1
+
+(defun inaccurate-balanceness (tree)
+  "If TREE is ballanced, result of this function
+   will be close to 1."
+  (let* ((num (voxels-in-tree tree))
+         (expected-depth (ceiling (log (/ (* 2.0 num)
+                                         (1+ *max-dots*)))
+                                 (log 8))))
+  (/ (inaccurate-tree-depth tree) expected-depth)))

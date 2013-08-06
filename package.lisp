@@ -30,6 +30,8 @@
            #:node-dots
            #:node-bounding-box
            #:leafp
+           #:inaccurate-tree-depth
+           #:voxels-in-tree
 
            #:align-on-voxel ; Geometry functions
            #:calc-abs-metric
