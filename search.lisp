@@ -34,10 +34,11 @@
       (push (cons cur-idx (cdr inter)) res))
     (reverse res)))
 
-(defun ray-tree-intersection (tree origin dir)
+(defun ray-tree-intersection (tree origin dir &optional (depth 0))
   "Search intersection of a ray with closest to the ORIGIN
    cuboid in TREE"
-  (declare (optimize (speed 3)))
+  (declare (optimize (speed 3))
+           (type (integer 0 #.most-positive-fixnum) depth))
   (let* ((bb (node-bounding-box tree))
          (bb-min (car bb))
          (bb-max (cdr bb)))
@@ -46,6 +47,8 @@
         (and bb (hit-box bb-min bb-max
                          origin dir))
       (if (not bb-interp) (return-from ray-tree-intersection nil))
+      (if (and (boundp '*lod*)
+               (= depth *lod*)) (return-from ray-tree-intersection bb-inter-coord))
     
       (cond
         ((leafp tree)
@@ -84,7 +87,7 @@
            (dolist (subspace plane-intersections)
              (let ((inter (ray-tree-intersection (nth (car subspace)
                                                       (node-children tree))
-                                                 (cdr subspace) dir)))
+                                                 (cdr subspace) dir (1+ depth))))
                (if inter (return inter))))))))))
 
 

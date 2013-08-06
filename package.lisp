@@ -40,4 +40,7 @@
            #:ray-tree-intersection ; Tree search
 
            #:*max-dots* ; Parameters
-           #:*voxel*))
+           #:*voxel*
+           #:*lod*
+
+           #:with-lod)) ; Macros

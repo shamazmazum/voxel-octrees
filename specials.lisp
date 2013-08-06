@@ -35,3 +35,22 @@
 (defparameter *voxel*
   (make-array 3 :element-type 'single-float :initial-element 1.0)
   "Size of cuboid in set")
+
+(defmacro defvar-unbound (var-name &optional doc)
+  `(progn
+     (defvar ,var-name)
+     (setf (documentation ',var-name 'variable) ,doc)))
+
+(declaim (type (integer 0 #.most-positive-fixnum) *lod*))
+(defvar-unbound *lod*
+    "May be bound to level of detail. The more LOD is,
+     the more accurate result of intersection(s) will
+     be calculated. In the other hand the less it is,
+     the faster calculations will be. Unbounded *LOD*
+     means no level of detail. The least allowed *LOD*
+     is zero.")
+
+(defmacro with-lod ((lod) &body body)
+  "Stupid wrapper around let.
+   Bounds LOD to a certain value."
+  `(let ((*lod* ,lod)) ,@body))
