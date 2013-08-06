@@ -100,11 +100,12 @@
   (do ((res 0)
        (i 0 (1+ i)))
       ((= i 3) res)
+    (declare (type fixnum res)
+             (type (integer 0 3) i))
     
-    (declare (type fixnum i res))
-    (setq res (logior res (sb-ext:truly-the fixnum
-                                            (ash (if (> (aref dot1 i)
-                                                        (aref dot2 i)) 1 0) i))))))
+    (setq res (logior res
+                      (ash (if (> (aref dot1 i)
+                                  (aref dot2 i)) 1 0) i)))))
 
 (defun align-on-voxel (dot)
   "Destructevily aligns on voxel"

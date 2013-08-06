@@ -54,10 +54,12 @@
         ((leafp tree)
          (let (leaf-intersections
                (dots (node-dots tree)))
-           (dotimes (i (length (sb-ext:truly-the simple-vector dots)))
+           (dotimes (i (length (#+sbcl sb-ext:truly-the
+                                #-sbcl the simple-vector dots)))
              (multiple-value-bind (interp coord)
                  (let ((dot (aref dots i)))
-                   (hit-box dot (sum-vector (copy-seq (sb-ext:truly-the dot dot)) *voxel*)  ;; Extra allocation
+                   (hit-box dot (sum-vector (copy-seq (#+sbcl sb-ext:truly-the
+                                                       #-sbcl the dot dot)) *voxel*)  ;; Extra allocation
                             origin dir))
                (if interp (push coord leaf-intersections))))
            
