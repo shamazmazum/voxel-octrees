@@ -22,14 +22,16 @@
 ;;(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;;SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-(defsystem :voxel-octrees
-  :description "Building and manipulating with octrees in CL"
-  :maintainer "Vasily Postnicov"
-  :version "1.0"
-  :components
-  ((:file "package")
-   (:file "specials" :depends-on ("package"))
-   (:file "tree" :depends-on ("package"))
-   (:file "geometry" :depends-on ("package"))
-   (:file "search" :depends-on ("package"))
-   (:file "test" :depends-on ("package"))))
+(in-package :voxel-octrees)
+
+;; Needed for *voxel*
+(deftype dot () '(simple-array single-float))
+
+(declaim (type fixnum *max-dots*))
+(defparameter *max-dots* 8
+  "Maximum number of dots in leaf")
+
+(declaim (type dot *voxel*))
+(defparameter *voxel*
+  (make-array 3 :element-type 'single-float :initial-element 1.0)
+  "Size of cuboid in set")

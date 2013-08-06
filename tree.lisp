@@ -24,17 +24,6 @@
 
 (in-package :voxel-octrees)
 
-(declaim (type fixnum *max-dots*))
-(defparameter *max-dots* 8
-  "Maximum number of dots in leaf")
-
-(deftype dot () '(simple-array single-float))
-
-(declaim (type dot *voxel*))
-(defparameter *voxel*
-  (make-array 3 :element-type 'single-float :initial-element 1.0)
-  "Size of cuboid in set")
-
 (declaim (inline leafp))
 (defun leafp (node)
   "Is node a leaf?"
