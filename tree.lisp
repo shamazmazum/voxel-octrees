@@ -90,7 +90,7 @@
 
 (declaim (ftype (function (dot dot) fixnum) get-subspace-idx))
 (defun get-subspace-idx (dot1 dot2)
-  "Placement of dot is coded by subspace index
+  "Placement of dot is encoded by subspace index
    In 3D there are 2^3 different possibilities
    of placement around the center. This function
    calculates which possibility is the case."
@@ -117,8 +117,13 @@
            (* alignment (fceiling x alignment))))
     (map-into dot #'align-coord dot *voxel*)))
 
+;; Each axis-aligned voxel is represented by its minimal coordinate
+;; and its sides stored in *VOXEL*.
+;; (For purposes this library was designed for, all voxels has
+;; the same length).
+
 (defun make-tree (dots)
-  "Build tree based on set of cuboids with min coordinates
+  "Build tree based on set of axis-aligned cuboids with min coordinates
    stored in dots"
   (declare (type simple-vector dots)
            (optimize (speed 3)))

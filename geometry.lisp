@@ -63,6 +63,9 @@
                                     (expt (- x y) 2))
                                 dot1 dot2)))))
 
+;; The following function was taken from C Graphics Gems
+;; Of course, it would be better, if it (was) implemented in C
+
 (defun hit-box (min max origin dir)
   "Find intersection of a ray and axis-aligned
    cuboid"
