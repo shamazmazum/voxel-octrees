@@ -102,6 +102,8 @@
 ;; to RAY-TREE-INTERSECTION's DEPTH which is related to LOD.
 
 ;; TODO: Add example of use, as promised.
+
+;; Excuse me for too long doc string. I feel that I need to make it so
 (defun local-ray-tree-intersection (path origin dir &optional (depth 0))
   "Same as RAY-TREE-INTERSECTION but operates not on a tree but on a path
    from a root node to a leaf. When LOCAL-RAY-TREE-INTERSECTION accepts
@@ -117,7 +119,11 @@
    The idea for this function comes from the assumption that to `local' rays
    hit two local (in space) voxels which are local in the tree too (voxel octress
    guarantees this). If this is not true (in example in case of set of random voxels),
-   be prepared to get penalty in time of execution. See example of use in source code."
+   be prepared to get penalty in time of execution. See example of use in source code.
+
+   Returns intersection FOUND USING LOCAL PROPERTIES (so if NIL is returned it does not
+   mean that there is no intersection at all, try RAY-TREE-INTERSECTION) and a truncated
+   PATH to avoid redundant calculations if future calls"
   (declare (optimize (speed 3))
            (type (integer 0 #.most-positive-fixnum) depth))
   (cond
