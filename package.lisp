@@ -40,8 +40,10 @@
            #:hit-plane
 
            #:ray-tree-intersection ; Tree search
+           #:local-ray-tree-intersection
 
            #:*max-dots* ; Parameters
+           #:*max-depth-local*
            #:*voxel*
            #:*lod*
 

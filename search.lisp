@@ -98,6 +98,34 @@
                                                                             (cons next-node path))
                  (if inter (return (values inter new-path))))))))))))
 
+;; NB: This DEPTH (which measures degree of locality of two voxel in space) is unrealted
+;; to RAY-TREE-INTERSECTION's DEPTH which is related to LOD.
+
+;; TODO: Add example of use, as promised.
+(defun local-ray-tree-intersection (path origin dir &optional (depth 0))
+  "Same as RAY-TREE-INTERSECTION but operates not on a tree but on a path
+   from a root node to a leaf. When LOCAL-RAY-TREE-INTERSECTION accepts
+   path, it performes recursive reverse search for intersection from a leaf
+   to a root and stops if intersection is found, PATH is too short or maximum
+   recursion level is reached.
+
+   This can be very useful when the PATH is obtained for the first ray with
+   origin1 and dir1 and when the same path is used for the second ray which has
+   the same origin2=origin1 and dir2 which differs from dir1 only insignificantly.
+   (Here comes the prefix LOCAL-)
+
+   The idea for this function comes from the assumption that to `local' rays
+   hit two local (in space) voxels which are local in the tree too (voxel octress
+   guarantees this). If this is not true (in example in case of set of random voxels),
+   be prepared to get penalty in time of execution. See example of use in source code."
+  (declare (optimize (speed 3))
+           (type (integer 0 #.most-positive-fixnum) depth))
+  (cond
+    ((and (/= depth *max-depth-local*)
+          (cdr path))
+     (let ((inter (ray-tree-intersection (car path) origin dir)))
+       (if inter (values inter path)
+           (local-ray-tree-intersection (cdr path) origin dir (1+ depth)))))))
 
 ;; More precise but slower
 ;; ?????

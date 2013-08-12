@@ -54,3 +54,10 @@
   "Stupid wrapper around let.
    Bounds LOD to a certain value."
   `(let ((*lod* ,lod)) ,@body))
+
+(declaim (type (integer 0 #.most-positive-fixnum) *max-depth-local*))
+(defparameter *max-depth-local* 2
+  "Maximal recursion depth for LOCAL-RAY-TREE-INTERSECTION.
+   The more this value is the more farest voxels in space
+   are considered `local'. Setting the value too big means
+   big penalty in execution time. Try to start with 2.")
