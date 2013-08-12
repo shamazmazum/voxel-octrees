@@ -34,9 +34,10 @@
       (push (cons cur-idx (cdr inter)) res))
     (reverse res)))
 
-(defun ray-tree-intersection (tree origin dir &optional (depth 0))
+(defun ray-tree-intersection (tree origin dir &optional (depth 0) (path (list tree)))
   "Search intersection of a ray with closest to the ORIGIN
-   cuboid in TREE"
+   cuboid in TREE. Returns point in which intersection is occured
+   and path to a tree leaf in which intersected voxel is stored."
   (declare (optimize (speed 3))
            (type (integer 0 #.most-positive-fixnum) depth))
   (let* ((bb (node-bounding-box tree))
@@ -46,11 +47,12 @@
     (multiple-value-bind (bb-interp bb-inter-coord)
         (and bb (hit-box bb-min bb-max
                          origin dir))
-      (if (not bb-interp) (return-from ray-tree-intersection nil))
-      (if (and (boundp '*lod*)
-               (= depth *lod*)) (return-from ray-tree-intersection bb-inter-coord))
-    
       (cond
+        ((not bb-interp) nil)
+        
+        ((and (boundp '*lod*)
+              (= depth *lod*)) (values bb-inter-coord path))
+        
         ((leafp tree)
          (let (leaf-intersections
                (dots (node-dots tree)))
@@ -68,7 +70,9 @@
                         (if (< (calc-abs-metric dot1 origin)
                                (calc-abs-metric dot2 origin))
                             dot1 dot2)))
-                 (reduce #'get-closest leaf-intersections)))))
+                 (values
+                  (reduce #'get-closest leaf-intersections)
+                  path)))))
         
         (t
          (let ((center (node-dots tree))
@@ -87,10 +91,12 @@
                                               (sort plane-intersections #'get-closest-tagged)))))
 
            (dolist (subspace plane-intersections)
-             (let ((inter (ray-tree-intersection (nth (car subspace)
-                                                      (node-children tree))
-                                                 (cdr subspace) dir (1+ depth))))
-               (if inter (return inter))))))))))
+             (let ((next-node (nth (car subspace)
+                                   (node-children tree))))
+               (multiple-value-bind (inter new-path) (ray-tree-intersection next-node
+                                                                            (cdr subspace) dir (1+ depth)
+                                                                            (cons next-node path))
+                 (if inter (return (values inter new-path))))))))))))
 
 
 ;; More precise but slower
