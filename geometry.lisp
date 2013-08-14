@@ -48,20 +48,20 @@
 (declaim (ftype (function (dot dot) single-float) calc-sqr-metric))
 (defun calc-sqr-metric (dot1 dot2)
   "Calculate distance between dot1 and dot2
-   using formula \rho (x,y) =\sqrt{\Sigma_{i=1}^3 (x_i-y_i)^2}
-   Actually, not used in tree processing"
+   using formula \rho (x,y) = \Sigma_{i=1}^3 (x_i-y_i)^2
+
+   A square of usual euclid metric."
   (declare (optimize (speed 3))
            (type dot dot1 dot2))
   (let ((components (make-array 3
                                 :element-type 'single-float
                                 :initial-element 0.0)))
     (declare (dynamic-extent components))
-    (sqrt
-          (reduce #'+ (map-into components
-                                #'(lambda (x y)
-                                    (declare (type single-float x y))
-                                    (expt (- x y) 2))
-                                dot1 dot2)))))
+    (reduce #'+ (map-into components
+                          #'(lambda (x y)
+                              (declare (type single-float x y))
+                              (expt (- x y) 2))
+                          dot1 dot2))))
 
 ;; The following function was taken from C Graphics Gems
 ;; Of course, it would be better, if it (was) implemented in C
