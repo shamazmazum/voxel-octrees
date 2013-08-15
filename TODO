@@ -1,0 +1,14 @@
+A note to myself, things to do:
+
+1. Write some kind of helper function to local-ray-tree-intersection, which
+takes a group of rays and for each successful intersection performes some
+action. This is not so easy as I thought to make this helper really UNIVERSAL.
+
+2. Currently voxel-octrees are static (I mean we cannot add/remove voxels
+without reconstruction of entire tree). Despite the fact, that adding and
+removing voxels and maintaining the tree balanced is a difficult job, we can
+still keep it valid. Also we can rebalance the tree from time to time. So we
+need to add tree-add/-remove functions.
+
+3. We need more searching algoritms! Searching for closest voxel or searching
+for voxels which are contained in the sphere is a good thing do do.
