@@ -165,3 +165,21 @@
              (and (>= x min)
                   (<= x max)))
          dot min max))
+
+(declaim (ftype (function (dot dot dot single-float) boolean) box-ball-interp))
+(defun box-ball-interp (min max center radius)
+  "Checks if a axis-aligned box hits a ball."
+  (declare (optimize (speed 3))
+           (type dot min max center)
+           (type single-float radius))
+  (flet ((calc-dist% (coord min max)
+           (declare (type single-float min max coord))
+           (cond
+             ((< coord min) (expt (- coord min) 2))
+             ((> coord max) (expt (- max coord) 2))
+             (t 0.0))))
+    
+    (let ((distances (make-array 3 :element-type 'single-float))
+          (radius% (expt radius 2)))
+      (declare (dynamic-extent distances))
+      (< (reduce #'+ (map-into distances #'calc-dist% center min max)) radius%))))

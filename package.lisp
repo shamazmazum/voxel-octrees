@@ -38,9 +38,11 @@
            #:calc-sqr-metric
            #:hit-box
            #:hit-plane
+           #:box-ball-interp
 
            #:ray-tree-intersection ; Tree search
            #:local-ray-tree-intersection
+           #:get-within-ball
 
            #:*max-dots* ; Parameters
            #:*max-depth-local*

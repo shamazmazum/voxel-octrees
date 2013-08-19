@@ -24,8 +24,6 @@
 
 (in-package :voxel-octrees)
 
-;; (Maybe) faster version
-
 (defun construct-subspace-indices (intersects)
   (let ((res (list (first intersects)))
          (cur-idx (caar intersects)))
@@ -132,3 +130,34 @@
      (let ((inter (ray-tree-intersection (car path) origin dir)))
        (if inter (values inter path)
            (local-ray-tree-intersection (cdr path) origin dir (1+ depth)))))))
+
+
+;; Additional search features
+
+;; Not sure if it's very fast. First thing that came in my head
+(defun get-within-ball (tree center radius)
+  "Returns list of voxels which have intersection with a ball.
+   The order the voxels appears in the list is undefined."
+  (declare (optimize (speed 3)))
+  (if
+   (let ((bb-box (node-bounding-box tree)))
+     (and bb-box
+          (destructuring-bind (bb-min . bb-max) bb-box
+            (box-ball-interp bb-min bb-max center radius))))
+
+   (cond
+     ((leafp tree)
+      (loop for dot across (node-dots tree)
+           for interp = (box-ball-interp dot
+                                         (sum-vector (copy-seq (#+sbcl sb-ext:truly-the
+                                                                #-sbcl the
+                                                                dot dot))
+                                                     *voxel*)
+                                         center radius)
+         when interp collect dot))
+
+     (t
+      (apply #'nconc
+             (flet ((get-within-child (tree)
+                      (get-within-ball tree center radius)))
+               (mapcar #'get-within-child (node-children tree))))))))
