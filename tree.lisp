@@ -39,12 +39,13 @@
   bounding-box
   dots)
 
-(declaim (ftype (function (dot dot) dot) sum-vector))
-(defun sum-vector (dot1 dot2)
-  "Destructively sum two dots"
-  (declare (type dot dot1 dot2)
+(declaim (ftype (function (dot dot &optional dot) dot) sum-vector))
+(defun sum-vector (dot1 dot2 &optional (res (copy-seq dot1)))
+  "Returns sum of two dots. If RES is supplied, destructively
+   modifies it rather then creating new dot."
+  (declare (type dot dot1 dot2 res)
            (optimize (speed 3)))
-  (map-into dot1 #'+ dot1 dot2))
+  (map-into res #'+ dot1 dot2))
 
 ;; Commented ones are more readable but slower examples
 
@@ -65,7 +66,7 @@
     (loop for x across dots do
          (map-into min #'min min (the dot x))
          (map-into max #'max max (the dot x)))
-    (cons min (sum-vector max *voxel*))))
+    (cons min (sum-vector max *voxel* max))))
 
 
 #|(defun calc-avg (dots)
@@ -80,7 +81,9 @@
   (let* ((sum-start (make-array 3
                                :element-type 'single-float
                                :initial-element 0.0))
-         (sum (reduce #'sum-vector dots :initial-value sum-start)))
+         (sum (reduce #'(lambda (d1 d2)
+                          (sum-vector d1 d2 d1))
+                      dots :initial-value sum-start)))
     
     (declare (type dot sum))
     (map-into sum #'(lambda (x)
@@ -94,19 +97,20 @@
    In 3D there are 2^3 different possibilities
    of placement around the center. This function
    calculates which possibility is the case."
-  (declare (type dot dot1 dot2)
-           (optimize (speed 3)))
-  
-  (do ((res 0)
-       (i 0 (1+ i)))
-      ((= i 3) res)
-    (declare (type fixnum res)
-             (type (integer 0 3) i))
-    
-    (setq res (logior res
-                      (ash (if (> (aref dot1 i)
-                                  (aref dot2 i)) 1 0) i)))))
+  (declare (optimize (speed 3)))
 
+  (let ((flags (make-array 3 :element-type '(unsigned-byte 8))))
+    (declare (type dot dot1 dot2)
+             (type (simple-array (unsigned-byte 8)) flags)
+             (dynamic-extent flags))
+
+    (flet ((get-flag (c1 c2 i)
+             (declare (type fixnum i)
+                      (type single-float c1 c2))
+             (ash (if (> c1 c2) 1 0) i)))
+      
+      (reduce #'logior (map-into flags #'get-flag dot1 dot2 '(0 1 2))))))
+  
 (defun align-on-voxel (dot)
   "Destructevily aligns on voxel"
   (declare (optimize (speed 3))

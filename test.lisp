@@ -56,7 +56,7 @@
       (multiple-value-bind (interp coord)
           (let ((dot (aref set i)))
             (hit-box dot
-                     (voxel-octrees::sum-vector (copy-seq dot) *voxel*)
+                     (voxel-octrees::sum-vector dot *voxel*)
                      origin dir))
         (if interp (push coord intersections))))
 
@@ -70,7 +70,7 @@
 (defun naive-search-within-ball (set center radius)
   (loop for dot across set
      for inter = (box-ball-interp dot
-                                  (voxel-octrees::sum-vector (copy-seq dot) *voxel*)
+                                  (voxel-octrees::sum-vector dot *voxel*)
                                   center radius)
      when inter collect dot))
 
@@ -216,7 +216,7 @@
            ;; Check is all voxels are contained in bounding-box
            (every #'(lambda (dot)
                       (and (voxel-octrees::dot-betweenp dot bb-min bb-max)
-                           (voxel-octrees::dot-betweenp (voxel-octrees::sum-vector (copy-seq dot) *voxel*) bb-min bb-max)))
+                           (voxel-octrees::dot-betweenp (voxel-octrees::sum-vector dot *voxel*) bb-min bb-max)))
                   (node-dots tree))
            t))
 

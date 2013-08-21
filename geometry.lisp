@@ -63,72 +63,81 @@
                               (expt (- x y) 2))
                           dot1 dot2))))
 
+(declaim (ftype (function (dot dot dot &optional dot) (values dot boolean))
+                fit-into-box))
+(defun fit-into-box (min max dot &optional (res (copy-seq dot)))
+  "Returns a dot laying in (or on the surface of) the
+   axis-aligned box defined by the coordinates MIN
+   and MAX and which is the closest dot to DOT.
+   Also returns the second value which is T if the
+   first returning value and DOT is the same"
+  (declare (type dot min max dot res)
+           (optimize (speed 3)))
+  
+  (flet ((choose-closest (min max coord)
+           (declare (type single-float min max coord))
+           (cond
+             ((< coord min) min)
+             ((> coord max) max)
+             (t coord))))
+
+    (values
+     (map-into res #'choose-closest min max dot)
+     (equalp res dot))))
+
+(defun dot-betweenp (dot min max)
+  "T if dot is placed between MIN and MAX"
+  (declare (type dot dot min max)
+           (optimize (speed 3)))
+
+  (every #'(lambda (x min max)
+             (and (>= x min)
+                  (<= x max)))
+         dot min max))
+
 ;; The following function was taken from C Graphics Gems
 ;; Of course, it would be better, if it (was) implemented in C
 
 (defun hit-box (min max origin dir)
   "Find intersection of a ray and axis-aligned
    cuboid"
-  ;; FIXME: Partially copies implementation of dot-betweenp and hit-plane
-  (declare (type dot min max origin dir)
-           (optimize (speed 3)))
+  (declare (optimize (speed 3)))
   
-  (let ((insidep t)
-        (inside (make-array 3))
+  (let ((tdist (make-array 3 :element-type 'single-float))
         (candidate-plane (make-array 3 :element-type 'single-float))
-        (tdist (make-array 3 :element-type 'single-float))
         (coord (make-array 3 :element-type 'single-float)))
-    (declare (dynamic-extent inside candidate-plane tdist))
-    
-    (dotimes (i 3)
+    (declare (dynamic-extent tdist candidate-plane)
+             (type dot origin dir tdist coord))
+
+    (multiple-value-bind (candidate-plane insidep)
+        (fit-into-box min max origin candidate-plane)
+
       (cond
-        ((< (aref origin i)
-            (aref min i))
-         (setf insidep nil
-               (aref candidate-plane i) (aref min i)
-               (aref inside i) nil))
-
-        ((> (aref origin i)
-            (aref max i))
-         (setf insidep nil
-               (aref candidate-plane i) (aref max i)
-               (aref inside i) nil))
-
+        (insidep (values t (copy-seq origin)))
         (t
-         (setf (aref inside i) t))))
+         (flet ((calc-tdist (origin candidate dir)
+                  (if (or (= candidate origin)
+                          (= dir 0.0))
+                      -1.0
+                      (/ (- candidate origin) dir))))
+           
+           (map-into tdist #'calc-tdist origin candidate-plane dir))
+         
+         (let* ((maxt (reduce #'max tdist))
+                (planenum (position maxt tdist)))
+           (declare (type single-float maxt))
+           
+           (if (>= maxt 0.0)
+               (progn
+                 (flet ((calc-hit-coords (candidate origin dir i)
+                          (declare (type fixnum i))
+                          (if (= i planenum) candidate
+                              (+ origin (* maxt dir)))))
+                   
+                   (map-into coord #'calc-hit-coords candidate-plane origin dir '(0 1 2)))
 
-    (if insidep
-        (return-from hit-box (values t (copy-seq origin)))) ; COPY-SEQ for safety
-
-    (dotimes (i 3)
-      (setf (aref tdist i)
-            (if (or (aref inside i)
-                    (= (aref dir i) 0.0))
-                -1.0
-                (/ (- (aref candidate-plane i)
-                      (aref origin i))
-                   (aref dir i)))))
-
-    (let* ((maxt (reduce #'max tdist))
-           (planenum (position maxt tdist)))
-      (declare (type single-float maxt))
-      (if (< maxt 0.0) (return-from hit-box nil))
+                 (if (dot-betweenp coord min max) (values t coord))))))))))
       
-      (dotimes (i 3)
-        (setf (aref coord i)
-              (if (= i planenum)
-                  (aref candidate-plane i)
-                  
-                  (let ((coord-i (+ (aref origin i)
-                                    (* maxt (aref dir i)))))
-                    (if (or (< coord-i (aref min i))
-                            (> coord-i (aref max i)))
-                        (return-from hit-box nil))
-                    coord-i))))
-      
-      (values t coord))))
-        
-
 (defun hit-plane (origin dir planedot planenum)
   "Find intersection of a ray and a plane
    with constant coordinate PLANENUM
@@ -149,37 +158,21 @@
                  (aref dir planenum))))
        (if (< k 0.0) nil ; Case k = 0 is above
            (let ((coord (make-array 3 :element-type 'single-float)))
-             (dotimes (i 3)
-               (setf (aref coord i)
-                     (if (= i planenum)
-                         (aref planedot planenum)
-                         (+ (aref origin i) (* k (aref dir i))))))
-             (values t coord)))))))
-
-(defun dot-betweenp (dot min max)
-  "T if dot is placed between MIN and MAX"
-  (declare (type dot dot min max)
-           (optimize (speed 3)))
-
-  (every #'(lambda (x min max)
-             (and (>= x min)
-                  (<= x max)))
-         dot min max))
+             (flet ((calc-hit-coords (planecoord origin dir i)
+                      (declare (type fixnum i))
+                      (if (= i planenum) planecoord
+                          (+ origin (* k dir)))))
+               (values t (map-into coord #'calc-hit-coords planedot origin dir '(0 1 2))))))))))
 
 (declaim (ftype (function (dot dot dot single-float) boolean) box-ball-interp))
 (defun box-ball-interp (min max center radius)
   "Checks if a axis-aligned box hits a ball."
   (declare (optimize (speed 3))
-           (type dot min max center)
            (type single-float radius))
-  (flet ((calc-dist% (coord min max)
-           (declare (type single-float min max coord))
-           (cond
-             ((< coord min) (expt (- coord min) 2))
-             ((> coord max) (expt (- max coord) 2))
-             (t 0.0))))
-    
-    (let ((distances (make-array 3 :element-type 'single-float))
-          (radius% (expt radius 2)))
-      (declare (dynamic-extent distances))
-      (< (reduce #'+ (map-into distances #'calc-dist% center min max)) radius%))))
+
+  (let ((fit-center (make-array 3 :element-type 'single-float)))
+    (declare (dynamic-extent fit-center))
+    (< (calc-sqr-metric
+        (fit-into-box min max center fit-center)
+        center)
+       (expt radius 2))))

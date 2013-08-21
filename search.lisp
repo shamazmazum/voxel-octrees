@@ -58,8 +58,7 @@
                                 #-sbcl the simple-vector dots)))
              (multiple-value-bind (interp coord)
                  (let ((dot (aref dots i)))
-                   (hit-box dot (sum-vector (copy-seq (#+sbcl sb-ext:truly-the
-                                                       #-sbcl the dot dot)) *voxel*)  ;; Extra allocation
+                   (hit-box dot (sum-vector dot *voxel*)  ;; Extra allocation
                             origin dir))
                (if interp (push coord leaf-intersections))))
            
@@ -149,10 +148,7 @@
      ((leafp tree)
       (loop for dot across (node-dots tree)
            for interp = (box-ball-interp dot
-                                         (sum-vector (copy-seq (#+sbcl sb-ext:truly-the
-                                                                #-sbcl the
-                                                                dot dot))
-                                                     *voxel*)
+                                         (sum-vector dot *voxel*)
                                          center radius)
          when interp collect dot))
 
