@@ -176,3 +176,14 @@
         (fit-into-box min max center fit-center)
         center)
        (expt radius 2))))
+
+(defun closest-in-set (dot set metric)
+  (declare (type dot dot)
+           (type (function (dot dot) single-float) metric)
+           (optimize (speed 3)))
+  
+  (flet ((closest-between-two (d1 d2)
+           (if (< (funcall metric dot d1)
+                  (funcall metric dot d2))
+               d1 d2)))
+    (reduce #'closest-between-two set)))

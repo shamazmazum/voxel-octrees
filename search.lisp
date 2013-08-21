@@ -58,18 +58,14 @@
                                 #-sbcl the simple-vector dots)))
              (multiple-value-bind (interp coord)
                  (let ((dot (aref dots i)))
-                   (hit-box dot (sum-vector dot *voxel*)  ;; Extra allocation
+                   (hit-box dot (sum-vector dot *voxel*)
                             origin dir))
                (if interp (push coord leaf-intersections))))
            
            (if leaf-intersections
-               (flet ((get-closest (dot1 dot2)
-                        (if (< (calc-abs-metric dot1 origin)
-                               (calc-abs-metric dot2 origin))
-                            dot1 dot2)))
-                 (values
-                  (reduce #'get-closest leaf-intersections)
-                  path)))))
+               (values
+                (closest-in-set origin leaf-intersections #'calc-abs-metric)
+                path))))
         
         (t
          (let ((center (node-dots tree))

@@ -60,12 +60,7 @@
                      origin dir))
         (if interp (push coord intersections))))
 
-    (flet ((get-closest (dot1 dot2)
-             (if (< (calc-sqr-metric origin dot1)
-                    (calc-sqr-metric origin dot2))
-                 dot1 dot2)))
-      (if intersections
-          (reduce #'get-closest intersections)))))
+      (if intersections (voxel-octrees::closest-in-set origin intersections #'calc-sqr-metric))))
 
 (defun naive-search-within-ball (set center radius)
   (loop for dot across set

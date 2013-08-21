@@ -55,6 +55,22 @@
          (reduce #'(lambda (x y) (map 'vector #'max x y)) dots)
          *voxel*)))|#
 
+;; FIXME: Try to remove redundant code
+;;        int following two functions
+;;        without big damage to performance.
+
+(defun update-bounding-box (box dot)
+  "Propagate bounding BOX on voxel with
+   coordinate DOT"
+  (declare (optimize (speed 3)))
+  (destructuring-bind (min . max) box
+    (declare (type dot min max dot))
+    
+    (map-into min #'min min dot)
+    (map-into max #'max max (sum-vector dot *voxel*)))
+
+  box)
+
 (defun calc-bounding-box (dots)
   "Calc minimal cuboid hull for set of cuboids"
   (declare (type simple-vector dots)
