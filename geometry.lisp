@@ -178,6 +178,8 @@
        (expt radius 2))))
 
 (defun closest-in-set (dot set metric)
+  "Returns dot in the SET which is closest to DOT
+   by means of METRIC."
   (declare (type dot dot)
            (type (function (dot dot) single-float) metric)
            (optimize (speed 3)))
