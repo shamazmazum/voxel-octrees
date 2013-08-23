@@ -143,10 +143,10 @@
    (cond
      ((leafp tree)
       (loop for dot across (node-dots tree)
-           for interp = (box-ball-interp dot
+            for interp = (box-ball-interp dot
                                          (sum-vector dot *voxel*)
                                          center radius)
-         when interp collect dot))
+            when interp collect dot))
 
      (t
       (apply #'nconc
