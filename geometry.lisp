@@ -90,9 +90,9 @@
   (declare (type dot dot min max)
            (optimize (speed 3)))
 
-  (every #'(lambda (x min max)
-             (and (>= x min)
-                  (<= x max)))
+  (notany #'(lambda (x min max)
+              (or (< x min)
+                  (> x max)))
          dot min max))
 
 ;; The following function was taken from C Graphics Gems
